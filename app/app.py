@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     query = input("Please enter your question: ")
 
-    dict_inputs = {"questions": query}
+    dict_inputs = {"question": query}
 
     limit = {"recursion_limit": iterations}
 

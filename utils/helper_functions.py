@@ -30,7 +30,7 @@ def check_for_content(var):
         except:
             return var
     else:
-        var
+        return var
 
 def custom_print(message, stdscr=None, scroll_pos=0):
     if stdscr:

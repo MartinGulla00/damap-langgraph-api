@@ -4,10 +4,12 @@ from langgraph.graph.message import add_messages
 # Define the state object for the agent graph
 class AgentGraphState(TypedDict):
     question: str
+    schema: str
     planner_response: Annotated[list, add_messages]
     table_selector_response: Annotated[list, add_messages]
     query_generator_response: Annotated[list, add_messages]
     query_checker_response: Annotated[list, add_messages]
+    router_response: Annotated[list, add_messages]
     end_chain: Annotated[list, add_messages]
 
 # Define the nodes in the agent graph
@@ -50,9 +52,11 @@ def get_agent_graph_state(state:AgentGraphState, state_key:str):
     
 state = {
     "question":"",
+    "schema": "",
     "planner_response": [],
     "table_selector_response": [],
     "query_generator_response": [],
     "query_checker_response": [],
+    "router_response": [],
     "end_chain": []
 }

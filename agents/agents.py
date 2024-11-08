@@ -2,7 +2,9 @@ from models.openai_models import get_open_ai, get_open_ai_json
 from prompts.prompts import (
     planner_prompt_template,
     table_selector_prompt_template,
-    query_checker_prompt_template
+    query_checker_prompt_template,
+    query_generator_prompt_template,
+    router_prompt_template
 )
 from utils.helper_functions import get_current_utc_datetime, check_for_content
 from states.state import AgentGraphState
@@ -63,7 +65,7 @@ class TableSelectorAgent(Agent):
 
         messages = [
             {"role": "system", "content": selector_prompt},
-            {"role": "user", "content": f"research question: {question}"}
+            {"role": "user", "content": f"question: {question}"}
         ]
 
         llm = self.get_llm()
@@ -71,7 +73,7 @@ class TableSelectorAgent(Agent):
         response = ai_msg.content
 
         print(f"table selector: {response}")
-        self.update_state("selector_response", response)
+        self.update_state("table_selector_response", response)
 
         return self.state
 
@@ -80,8 +82,8 @@ class QueryCheckerAgent(Agent):
         feedback_value = feedback() if callable(feedback) else feedback
         generator_value = generator() if callable(generator) else generator
 
-        reporter_value = check_for_content(reporter_value)
         feedback_value = check_for_content(feedback_value)
+        generator_value = check_for_content(generator_value)
         
         query_checker_prompt = prompt.format(
             generator=generator_value,
@@ -92,7 +94,7 @@ class QueryCheckerAgent(Agent):
 
         messages = [
             {"role": "system", "content": query_checker_prompt},
-            {"role": "user", "content": f"research question: {question}"}
+            {"role": "user", "content": f"question: {question}"}
         ]
 
         llm = self.get_llm()
@@ -103,9 +105,43 @@ class QueryCheckerAgent(Agent):
         self.update_state("query_checker_response", response)
 
         return self.state
-# TODO: LLEGUE HASTA AQUI
+
+
+class QueryGeneratorAgent(Agent):
+    def invoke(self, question, prompt=query_generator_prompt_template, feedback=None, schema=None, selector=None, previous_queries=None):
+        feedback_value = feedback() if callable(feedback) else feedback
+        selector_value = selector() if callable(selector) else selector
+        previous_queries_value = previous_queries() if callable(previous_queries) else previous_queries
+
+        feedback_value = check_for_content(feedback_value)
+        selector_value = check_for_content(selector_value)
+        previous_queries_value = check_for_content(previous_queries_value)
+        
+        query_generator_prompt = prompt.format(
+            schema=schema,
+            selector=selector_value,
+            feedback=feedback_value,
+            datetime=get_current_utc_datetime(),
+            state=self.state,
+            previous_queries=previous_queries_value
+        )
+
+        messages = [
+            {"role": "system", "content": query_generator_prompt},
+            {"role": "user", "content": f"question: {question}"}
+        ]
+
+        llm = self.get_llm()
+        ai_msg = llm.invoke(messages)
+        response = ai_msg.content
+
+        print(f"query_generator: {response}")
+        self.update_state("query_generator_response", response)
+
+        return self.state
+
 class RouterAgent(Agent):
-    def invoke(self, feedback=None, research_question=None, prompt=router_prompt_template):
+    def invoke(self, feedback=None, question=None, prompt=router_prompt_template):
         feedback_value = feedback() if callable(feedback) else feedback
         feedback_value = check_for_content(feedback_value)
 
@@ -113,24 +149,14 @@ class RouterAgent(Agent):
 
         messages = [
             {"role": "system", "content": router_prompt},
-            {"role": "user", "content": f"research question: {research_question}"}
+            {"role": "user", "content": f"question: {question}"}
         ]
 
         llm = self.get_llm()
         ai_msg = llm.invoke(messages)
         response = ai_msg.content
 
-        print(colored(f"Router 🧭: {response}", 'blue'))
         self.update_state("router_response", response)
-        return self.state
-
-class FinalReportAgent(Agent):
-    def invoke(self, final_response=None):
-        final_response_value = final_response() if callable(final_response) else final_response
-        response = final_response_value.content
-
-        print(colored(f"Final Report 📝: {response}", 'blue'))
-        self.update_state("final_reports", response)
         return self.state
 
 class EndNodeAgent(Agent):

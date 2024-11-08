@@ -81,6 +81,8 @@ table_selector_guided_json = {
 
 query_checker_prompt_template = """
 You are a SQL query checker. Your task is to review the generatior's response to the question and provide feedback.
+The query must be syntactically correct and relevant to the user's question. It should also only include the necessary tables and columns.
+The tables and columns must exist in the schema provided, and the columns must be in the correct tables.
 
 Here is the generator's response:
 Generator's response: {generator}
@@ -163,6 +165,9 @@ Current date and time:
 You should be aware of what the previous agents have done. You can see this in the state of the agents:
 State of the agents: {state}
 
+Here are the previous queries generated:
+{previous_queries}
+
 Your response must take the following json format:
 
     "feedback": "If you belive you should use tables from the schema that the selector has not selected, provide precise feedback on why you have done so.",
@@ -190,3 +195,35 @@ query_generator_guided_json = {
     },
     "required": ["feedback", "sql_query", "can_generate"]
 }
+
+
+
+router_prompt_template = """
+You are a router. Your task is to route the conversation to the next agent based on the feedback provided by the checker.
+You must choose one of the following agents: planner, selector, or generator.
+
+Here is the feedback provided by the checker:
+Feedback: {feedback}
+
+### Criteria for Choosing the Next Agent:
+- **planner**: If new information is required.
+- **selector**: If other tables are required or if the table selection needs improvement.
+- **generator**: If the query needs improvement or if the query is correct.
+- **end**: If the query was checked and passed the review.
+you must provide your response in the following json format:
+    
+        "next_agent": "one of the following: planner/selector/generator/end"
+    
+"""
+
+router_guided_json = {
+    "type": "object",
+    "properties": {
+        "next_agent": {
+            "type": "string",
+            "description": "one of the following: planner/selector/generator/end"
+        }
+    },
+    "required": ["next_agent"]
+}
+
