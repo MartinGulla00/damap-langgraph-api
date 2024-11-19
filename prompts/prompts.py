@@ -87,6 +87,9 @@ The tables and columns must exist in the schema provided, and the columns must b
 Here is the generator's response:
 Generator's response: {generator}
 
+Here is the schema:
+{schema}
+
 Your feedback should include reasons for passing or failing the review and suggestions for improvement.
 
 You should consider the previous feedback you have given when providing new feedback.
@@ -200,10 +203,13 @@ query_generator_guided_json = {
 
 router_prompt_template = """
 You are a router. Your task is to route the conversation to the next agent based on the feedback provided by the checker.
-You must choose one of the following agents: planner, selector, or generator.
+You must choose one of the following agents: planner, selector, generator or end.
 
 Here is the feedback provided by the checker:
 Feedback: {feedback}
+If the feedback is positive for all the criteria, you should route the conversation to the end agent.
+Only if one of the criteria is negative, you should route the conversation to the corresponding agent.
+But if the response of the checker is negative for at least one of the criteria, you can route the conversation to the corresponding agent or to the end, depending on the feedback.
 
 ### Criteria for Choosing the Next Agent:
 - **planner**: If new information is required.

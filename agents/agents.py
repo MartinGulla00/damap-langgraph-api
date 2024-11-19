@@ -78,7 +78,7 @@ class TableSelectorAgent(Agent):
         return self.state
 
 class QueryCheckerAgent(Agent):
-    def invoke(self, question, prompt=query_checker_prompt_template, feedback=None, generator=None):
+    def invoke(self, question, prompt=query_checker_prompt_template, feedback=None, generator=None, schema=None):
         feedback_value = feedback() if callable(feedback) else feedback
         generator_value = generator() if callable(generator) else generator
 
@@ -89,6 +89,7 @@ class QueryCheckerAgent(Agent):
             generator=generator_value,
             state=self.state,
             feedback=feedback_value,
+            schema=schema,
             datetime=get_current_utc_datetime(),
         )
 

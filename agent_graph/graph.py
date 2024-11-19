@@ -24,6 +24,7 @@ from prompts.prompts import (
     router_guided_json,
 )
 from states.state import AgentGraphState, get_agent_graph_state, state
+from utils.helper_functions import print_sql_query
 
 def create_graph(server=None, model=None, stop=None, model_endpoint=None, temperature=0):
     graph = StateGraph(AgentGraphState)
@@ -99,6 +100,7 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
             feedback=lambda: get_agent_graph_state(state=state, state_key="query_checker_latest"),
             generator=lambda: get_agent_graph_state(state=state, state_key="query_generator_latest"),
             prompt=query_checker_prompt_template,
+            schema=state["schema"]
         )
     )
 
@@ -114,7 +116,7 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
             temperature=temperature
         ).invoke(
             question=state["question"],
-            feedback=lambda: get_agent_graph_state(state=state, state_key="reviewer_latest"),
+            feedback=lambda: get_agent_graph_state(state=state, state_key="query_checker_latest"),
             prompt=router_prompt_template
         )
     )
@@ -128,7 +130,7 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
             review = review_list[-1]
         else:
             review = "No review"
-
+        print("Review: ", review)
         if review != "No review":
             if isinstance(review, HumanMessage):
                 review_content = review.content
@@ -139,7 +141,8 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
             next_agent = review_data["next_agent"]
         else:
             next_agent = "end"
-
+        if next_agent == "end":
+            print_sql_query(lambda: get_agent_graph_state(state=state, state_key="query_generator_latest"))
         return next_agent
 
     # Add edges to the graph

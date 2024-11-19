@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     query = input("Please enter your question: ")
 
-    dict_inputs = {"question": query}
+    dict_inputs = {"question": query, "schema": "create table users (id int, name text)"}
 
     limit = {"recursion_limit": iterations}
 

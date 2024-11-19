@@ -35,37 +35,36 @@ class ChatWorkflow:
         self.workflow = compile_workflow(graph)
         self.recursion_limit = recursion_limit
 
-    def invoke_workflow(self, message):
-        if not self.workflow:
-            return "Workflow has not been built yet. Please update settings first."
+    # def invoke_workflow(self, message):
+    #     if not self.workflow:
+    #         return "Workflow has not been built yet. Please update settings first."
         
-        dict_inputs = {"question": message.content, "schema": "create table users (id int, name text)"}
-        limit = {"recursion_limit": self.recursion_limit}
-        reporter_state = None
+    #     dict_inputs = {"question": message.content, "schema": "create table users (id int, name text)"}
+    #     limit = {"recursion_limit": self.recursion_limit}
+    #     reporter_state = None
 
-        for event in self.workflow.stream(dict_inputs, limit):
-            next_agent = ""
-            if "router" in event.keys():
-                state = event["router"]
-                reviewer_state = state['router_response']
-                # print("\n\nREVIEWER_STATE:", reviewer_state)
-                reviewer_state_dict = json.loads(reviewer_state)
-                next_agent_value = reviewer_state_dict["next_agent"]
-                if isinstance(next_agent_value, list):
-                    next_agent = next_agent_value[-1]
-                else:
-                    next_agent = next_agent_value
+    #     for event in self.workflow.stream(dict_inputs, limit):
+    #         next_agent = ""
+    #         if "router" in event.keys():
+    #             state = event["router"]
+    #             checker_state = state['router_response']
+    #             checker_state_dict = json.loads(checker_state)
+    #             next_agent_value = checker_state_dict["next_agent"]
+    #             if isinstance(next_agent_value, list):
+    #                 next_agent = next_agent_value[-1]
+    #             else:
+    #                 next_agent = next_agent_value
 
-            if next_agent == "final_report":
-                # print("\n\nEVENT_DEBUG:", event)
-                state = event["router"]
-                reporter_state = state['reporter_response']
-                if isinstance(reporter_state, list):
-                    print("LIST:", "TRUE")
-                    reporter_state = reporter_state[-1]
-                return reporter_state.content if reporter_state else "No report available"
+    #         if next_agent == "final_report":
+    #             # print("\n\nEVENT_DEBUG:", event)
+    #             state = event["router"]
+    #             reporter_state = state['reporter_response']
+    #             if isinstance(reporter_state, list):
+    #                 print("LIST:", "TRUE")
+    #                 reporter_state = reporter_state[-1]
+    #             return reporter_state.content if reporter_state else "No report available"
 
-        return "Workflow did not reach final report"
+    #     return "Workflow did not reach final query"
 
 # Use a single instance of ChatWorkflow
 chat_workflow = ChatWorkflow()
@@ -79,11 +78,6 @@ async def start():
                 label="Select the server you want to use:",
                 values=[
                     "openai",
-                    "ollama",
-                    "vllm",
-                    "groq",
-                    "claude",
-                    "gemini"
                 ]
             ),
             NumberInput(
@@ -93,58 +87,16 @@ async def start():
                 initial=40
             ),
             TextInput(
-                id="google_serper_api_key",
-                label="Enter your SERPER API Key:",
-                description="You can get your API key from https://serper.dev/",
-                # initial="NO_KEY_GIVEN"
-                
-            ),
-            TextInput(
                 id='openai_llm_api_key',
                 label='Enter your OpenAI API Key:',
                 description="Only use this if you are using an OpenAI Model.",
                 # initial="NO_KEY_GIVEN"
             ),
             TextInput(
-                id='groq_llm_api_key',
-                label='Enter your Groq API Key:',
-                description="Only use this if you are using Groq.",
-                # initial="NO_KEY_GIVEN"
-            ),
-            TextInput(
-                id='claud_llm_api_key',
-                label='Enter your Claud API',
-                description="Only use this if you are using Claud.",
-            ),
-            TextInput(
-                id='gemini_llm_api_key',
-                label='Enter your Gemini API',
-                description="Only use this if you are using Gemini.",
-            ),
-            TextInput(
                 id='llm_model',
                 label='Enter your Model Name:',
                 description="The name of the model you want to use"
             ),
-            TextInput(
-                id='server_endpoint',
-                label='Your vLLM server endpoint:',
-                description="Your HTTPs endpoint for the vLLM server. Only use if you are using a custom server"
-            ),
-            TextInput(
-                id='stop_token',
-                label='Stop token:',
-                description="The token that will be used to stop the model from generating more text. The default value is <|end_of_text|>",
-                initial="<|end_of_text|>"
-            ),
-            Slider(
-                id='temperature',
-                label='Temperature:',
-                initial=0,
-                max=1,
-                step=0.05,
-                description="Lower values will generate more deterministic responses, while higher values will generate more random responses. The default value is 0"
-            )
         ]
     ).send()
 

@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, timezone
 import yaml
@@ -54,3 +55,10 @@ def custom_print(message, stdscr=None, scroll_pos=0):
         return num_lines
     else:
         print(message)
+
+def print_sql_query(query_generator_state=None):
+    generator_value = query_generator_state() if callable(query_generator_state) else query_generator_state
+    generator_value = check_for_content(generator_value)
+    print("SQL Query: ", json.loads(generator_value)["sql_query"])
+
+    
