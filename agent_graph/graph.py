@@ -5,17 +5,18 @@ from typing import TypedDict, Annotated
 from langchain_core.messages import HumanMessage
 from agents.agents import (
     PlannerAgent,
-    TableSelectorAgent,
+    # TableSelectorAgent,
     EndNodeAgent,
     QueryGeneratorAgent,
     QueryCheckerAgent,
     RouterAgent,
+    SchemaSenderAgent
 )
 from prompts.prompts import (
     planner_prompt_template,
     planner_guided_json,
-    table_selector_prompt_template,
-    table_selector_guided_json,
+    # table_selector_prompt_template,
+    # table_selector_guided_json,
     query_generator_prompt_template,
     query_generator_guided_json,
     query_checker_prompt_template,
@@ -28,6 +29,20 @@ from utils.helper_functions import print_sql_query
 
 def create_graph(server=None, model=None, stop=None, model_endpoint=None, temperature=0):
     graph = StateGraph(AgentGraphState)
+
+
+    graph.add_node(
+        "sender", 
+        lambda state: SchemaSenderAgent(
+            state=state,
+            model=model,
+            server=server,
+            guided_json=planner_guided_json,
+            stop=stop,
+            model_endpoint=model_endpoint,
+            temperature=temperature
+        ).invoke()
+    )
 
     graph.add_node(
         "planner", 
@@ -46,24 +61,23 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
         )
     )
 
-    graph.add_node(
-        "selector",
-        lambda state: TableSelectorAgent(
-            state=state,
-            model=model,
-            server=server,
-            guided_json=table_selector_guided_json,
-            stop=stop,
-            model_endpoint=model_endpoint,
-            temperature=temperature
-        ).invoke(
-            question=state["question"],
-            feedback=lambda: get_agent_graph_state(state=state, state_key="query_checker_latest"),
-            previous_selections=lambda: get_agent_graph_state(state=state, state_key="table_selector_all"),
-            prompt=table_selector_prompt_template,
-            schema=state["schema"]
-        )
-    )
+    # graph.add_node(
+    #     "selector",
+    #     lambda state: TableSelectorAgent(
+    #         state=state,
+    #         model=model,
+    #         server=server,
+    #         guided_json=table_selector_guided_json,
+    #         stop=stop,
+    #         model_endpoint=model_endpoint,
+    #         temperature=temperature
+    #     ).invoke(
+    #         question=state["question"],
+    #         feedback=lambda: get_agent_graph_state(state=state, state_key="query_checker_latest"),
+    #         previous_selections=lambda: get_agent_graph_state(state=state, state_key="table_selector_all"),
+    #         prompt=table_selector_prompt_template,
+    #     )
+    # )
 
     graph.add_node(
         "generator", 
@@ -80,8 +94,7 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
             feedback=lambda: get_agent_graph_state(state=state, state_key="query_checker_latest"),
             previous_queries=lambda: get_agent_graph_state(state=state, state_key="query_generator_all"),
             prompt=query_generator_prompt_template,
-            schema=state["schema"],
-            selector=lambda: get_agent_graph_state(state=state, state_key="selector_latest")
+            # selector=lambda: get_agent_graph_state(state=state, state_key="selector_latest")
         )
     )
 
@@ -100,7 +113,6 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
             feedback=lambda: get_agent_graph_state(state=state, state_key="query_checker_latest"),
             generator=lambda: get_agent_graph_state(state=state, state_key="query_generator_latest"),
             prompt=query_checker_prompt_template,
-            schema=state["schema"]
         )
     )
 
@@ -146,10 +158,12 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
         return next_agent
 
     # Add edges to the graph
-    graph.set_entry_point("planner")
+    graph.set_entry_point("sender")
     graph.set_finish_point("end")
-    graph.add_edge("planner", "selector")
-    graph.add_edge("selector", "generator")
+    graph.add_edge("sender", "planner")
+    graph.add_edge("planner", "generator")
+    # graph.add_edge("planner", "selector")
+    # graph.add_edge("selector", "generator")
     graph.add_edge("generator", "checker")
     graph.add_edge("checker", "router")
 

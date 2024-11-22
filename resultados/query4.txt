@@ -1,0 +1,9 @@
+Pregunta: Listado de movimientos contables y de banco conciliados para la cuenta e intervalo de periodos definido. Los mismos se presentan con su comentario y fecha de registración. Mi cuenta tiene id 1
+
+SQL Query: SELECT mc.Concepto AS comentario, mc.Fecha_Asiento AS fecha_registracion FROM dw_movs_contables mc JOIN dw_links dl ON mc.ID_Fila_PK = dl.ID_Mov_Contable WHERE mc.ID_Cuenta = 1 AND mc.flag_conciliado = 1;
+
+La query anterior la rechazo el checker, y el generator utilizo el feedback para generar una nueva query:
+
+SQL Query:  SELECT mc.Concepto AS comentario, mc.Fecha_Asiento AS fecha_registracion FROM dw_movs_contables mc WHERE mc.ID_Cuenta = 1 AND mc.flag_conciliado = b'1' AND mc.Fecha_Asiento BETWEEN '2024-01-01' AND '2024-12-31';
+
+Comentarios: Para la fecha, esto utilizo Fecha_Asiento, la original utilizo Cod_AAAAMM. Los selects fueron distintos ya que no se especifico que se queria. 

@@ -17,8 +17,10 @@ if __name__ == "__main__":
     verbose = False
 
     query = input("Please enter your question: ")
+    with open("schemas/damap.sql", "r") as file:
+        schema = file.read()
 
-    dict_inputs = {"question": query, "schema": "create table users (id int, name text)"}
+    dict_inputs = {"question": query, "schema": schema}
 
     limit = {"recursion_limit": iterations}
 

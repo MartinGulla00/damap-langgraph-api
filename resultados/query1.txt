@@ -1,0 +1,22 @@
+Pregunta: Listado de conciliaciones con los movimientos de banco con su descripcion, debe , haber , paso de matching y tipo de estado de la conciliacion.
+
+SQL Query:  SELECT c.DESC_Descripcion AS descripcion_conciliacion,
+       me.Descripcion AS descripcion_movimiento,
+       me.Val_Debito AS debe,
+       me.Val_Credito AS haber,
+       wm.descripcion_paso AS paso_matching,
+       c.id_tipo_estado_conciliacion AS tipo_estado_conciliacion
+FROM dw_cancelaciones c
+JOIN dw_links l ON c.ID_Cancelacion_PK = l.ID_Cancelacion
+JOIN dw_movs_entidad me ON l.ID_Mov_Entidad = me.ID_Fila_PK
+LEFT JOIN dw_workflow_matching wm ON c.NUM_PasoWorkflow = wm.NUM_NumeroPaso
+WHERE c.id_tipo_estado_conciliacion IS NOT NULL;
+
+Comentarios: Muestra informacion similar (pero distinta) a la original, ya que no se le pidio informacion especifica.
+
+
+PRegunta: quiero un listado de las cancelaciones del cliente con id = 1. cada cancelacion debe tener tambien los movimientos asociados, con su debe y haber, paso de matching, y estado de la cancelacion (o conciliacion)
+
+SQL Query:  SELECT dc.DESC_Descripcion AS cancelacion_descripcion, dc.TimeStamp_Creacion AS fecha_cancelacion, dmc.Val_Debe AS debe_contable, dmc.Val_Haber AS haber_contable, dme.Val_Debito AS debito_entidad, dme.Val_Credito AS credito_entidad, dwm.descripcion_paso AS paso_matching, steb.Desc_EstadoBloque AS estado_conciliacion FROM dw_cancelaciones dc LEFT JOIN dw_links dl ON dc.ID_Cancelacion_PK = dl.ID_Cancelacion LEFT JOIN dw_movs_contables dmc ON dl.ID_Mov_Contable = dmc.ID_Fila_PK LEFT JOIN dw_movs_entidad dme ON dl.ID_Mov_Entidad = dme.ID_Fila_PK LEFT JOIN dw_workflow_matching dwm ON dc.NUM_PasoWorkflow = dwm.NUM_NumeroPaso LEFT JOIN sis_tipo_estado_bloques steb ON dc.id_tipo_estado_conciliacion = steb.ID_EstadoBloque_PK WHERE dc.id_cliente = 1;
+
+Comentarios: los selects parecen estar muy bien, la diferencia principal con el ejemplo es que el ejemplo utiliza sis_template_formato_archivo y sis_sistema_origen para los dw_movs_entidad, y que tambien el estado lo saca de la tabla de cancelaciones con id_tipo_estado_conciliacion, y aca lo hace con sis_tipo_estado_bloques. Tambien ellos filtran por fecha, lo cual no esta en la pregunta original

@@ -1,0 +1,26 @@
+Pregunta: quiero la cantidad de conciliaciones para mi cuenta de id 1, y los ajustes contables para la misma
+
+SQL Query: SELECT COUNT(cant_partidas_conciliadas) AS cantidad_conciliaciones FROM dw_cancelaciones WHERE ID_Cuenta = 1;
+
+Comentarios: 
+       El checker dice que no es valida: "It does not address the second part of the question, which asks for 'ajustes contables' (accounting adjustments) for the same account. The schema provided does not include a table or columns specifically for accounting adjustments, so it is not possible to fulfill this part of the request without additional schema information."
+
+       Tambien, hace un count de cant_partidas_conciliadas, pero la query ejemplo hace un count de todos los registros para la cuenta
+
+
+
+Pregunta: quiero ver la cantidad de conciliaciones del cliente id = 1.
+
+Comentarios: "The query provided is incorrect because it uses the 'dw_cancelaciones' table, which is related to cancellations, not reconciliations". Hay que ver el wording.
+
+Pregunta: quiero ver la cantidad de cancelaciones del cliente id = 1.
+
+SQL Query:  SELECT COUNT(*) AS cantidad_cancelaciones FROM dw_cancelaciones WHERE id_cliente = 1;
+
+Comentarios: OK
+
+Pregunta: quiero ver las cancelaciones del cliente id = 1. Estas cancelaciones deben tener la suma total de los ajustes restados
+
+SQL Query:  SELECT (SUM(dc.Importe_Ajuste_Debe) - SUM(dc.Importe_Ajuste_Haber)) AS total_net_adjustment FROM dw_cancelaciones dc WHERE dc.id_cliente = 1;
+
+Comentarios: Esto esta ok con respecto al ejemplo, la diferencia es que en el ejemplo solo mostraba valor positivo mostrando como titulo "debe" o "haber" dependiendo de que valor se le restaba a cual
