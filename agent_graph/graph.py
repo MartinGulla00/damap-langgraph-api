@@ -26,6 +26,8 @@ from prompts.prompts import (
 )
 from states.state import AgentGraphState, get_agent_graph_state, state
 from utils.helper_functions import print_sql_query
+from langgraph.checkpoint.sqlite import SqliteSaver
+import sqlite3
 
 def create_graph(server=None, model=None, stop=None, model_endpoint=None, temperature=0):
     graph = StateGraph(AgentGraphState)
@@ -175,5 +177,7 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
     return graph
 
 def compile_workflow(graph):
-    workflow = graph.compile()
+    connection = sqlite3.connect("memory.sqlite", check_same_thread=False)
+    memory = SqliteSaver(connection)
+    workflow = graph.compile(checkpointer=memory)
     return workflow
