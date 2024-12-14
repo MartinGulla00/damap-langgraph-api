@@ -160,7 +160,7 @@ class RouterAgent(Agent):
 class SchemaSenderAgent(Agent):
     def invoke(self):
         schema = self.state.get("schema")
-
+        print(f"schema: {schema}")
         messages = [
             {"role": "system", "content": "This message is where all other agents will go to see the database schema. The response should be a json with key-value: { is_valid: True/False } only."},
             {"role": "user", "content": f"schema: {schema}"}
