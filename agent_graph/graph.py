@@ -145,18 +145,23 @@ def create_graph(server=None, model=None, stop=None, model_endpoint=None, temper
         else:
             review = "No review"
         print("Review: ", review)
+        sql_query = None  # Captura el SQL query
+
         if review != "No review":
             if isinstance(review, HumanMessage):
                 review_content = review.content
             else:
                 review_content = review
-            
+
             review_data = json.loads(review_content)
             next_agent = review_data["next_agent"]
         else:
             next_agent = "end"
+        
         if next_agent == "end":
-            print_sql_query(lambda: get_agent_graph_state(state=state, state_key="query_generator_latest"))
+            sql_query = print_sql_query(lambda: get_agent_graph_state(state=state, state_key="query_generator_latest"))
+
+        state["sql_query"] = sql_query 
         return next_agent
 
     # Add edges to the graph

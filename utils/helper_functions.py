@@ -59,6 +59,9 @@ def custom_print(message, stdscr=None, scroll_pos=0):
 def print_sql_query(query_generator_state=None):
     generator_value = query_generator_state() if callable(query_generator_state) else query_generator_state
     generator_value = check_for_content(generator_value)
-    print("SQL Query: ", json.loads(generator_value)["sql_query"])
+    sql_query = json.loads(generator_value).get("sql_query", "No SQL query generated.")
+    print("SQL Query: ", sql_query)
+    return sql_query  
+
 
     
