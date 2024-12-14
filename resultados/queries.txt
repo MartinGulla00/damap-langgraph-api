@@ -1,0 +1,220 @@
+Query 1:
+
+ 
+
+SELECT  `c`.`ID_Cancelacion_PK` AS `ID_CONCILIACION`,
+
+`mc`.`ID_Fila_PK` AS `ID_CONTABLE`,
+
+mc.Nro_Identificacion_Unico AS `Planilla`,
+
+`me`.`ID_Fila_PK` AS `ID_MOV_BANCO`,
+
+cc.num_identificacion_externo AS `COD_BANCO`,
+
+ifnull(`mc`.`Fecha_Asiento`,`me`.`Fecha`) `FECHA`, 
+
+ifnull(`mc`.`Concepto`,`me`.`Descripcion`) `DESCRIPCION`,
+
+tm.num_identificacion_externo `COD_BK_TIPO_MOV`,
+
+ifnull( `mc`.`Val_Debe`,`me`.`Val_Debito`) `DEBE`,
+
+ifnull( `mc`.`Val_Haber`,`me`.`Val_Credito`) `HABER` ,
+
+wm.descripcion_paso  ,
+
+c.id_tipo_estado_conciliacion
+
+FROM (((((( `dw_cancelaciones` `c`      
+
+JOIN `dw_links` `l` ON (`c`.`ID_Cancelacion_PK` = `l`.`ID_Cancelacion`) )
+
+LEFT JOIN `dw_movs_contables` `mc` ON (`l`.`ID_Mov_Contable` = `mc`.`ID_Fila_PK`))
+
+LEFT JOIN `dw_movs_entidad` `me` ON (`l`.`ID_Mov_Entidad` = `me`.`ID_Fila_PK`))
+
+LEFT JOIN (SELECT TFA.ID_Template_Formato_Archivo_PK,SO.num_identificacion_externo
+
+     FROM sis_template_formato_archivo TFA,sis_sistema_origen SO
+
+     WHERE TFA.ID_Sistema_Origen=SO.id_sistema_origen_pk) `cc` ON (me.ID_Template_Formato_Archivo=cc.ID_Template_Formato_Archivo_PK))
+
+LEFT JOIN `dw_tipo_movimientos` `tm` ON (`mc`.`ID_Tipo_Movimiento` = `tm`.`ID_TipoMovimiento_PK`) )
+
+LEFT JOIN `dw_workflow_matching` `wm` ON (`c`.`NUM_PasoWorkflow` = `wm`.ID_PasoWorkflow_PK) )
+
+where wm.descripcion_paso like 'Match por item MVD' and `c`.`ID_Cuenta`=? and `c`.`Cod_AAAAMM_Ini`>=? and `c`.`Cod_AAAAMM_Fin`<=?
+
+ 
+
+ 
+
+Listado de conciliaciones con los movimientos de banco con su descripcion, debe , haber , paso de matching y tipo de estado de la conciliacion.
+
+ 
+
+ 
+
+Query 2:
+
+ 
+
+select count(*) 'Cantidad Conciliaciones', Minima_Fecha_Contable 'Fecha inicio Acumulacion','<<SALDOS AJUSTES CONCILIACIONES-DAMAP>>' as 'Concepto',    IF(sum(Importe_Ajuste_Debe)-sum(Importe_Ajuste_Haber)>=0,sum(Importe_Ajuste_Debe)-sum(Importe_Ajuste_Haber),0) Haber,
+
+        IF(sum(Importe_Ajuste_Haber)-sum(Importe_Ajuste_Debe)>=0,sum(Importe_Ajuste_Haber)-sum(Importe_Ajuste_Debe),0) Debe
+
+from dw_cancelaciones
+
+where ID_Cuenta=? and Cod_AAAAMM_Ini>=? AND Cod_AAAAMM_Fin<=?
+
+ 
+
+Informe de la cantidad de conciliaciones para una cuenta y sus ajustes contable
+
+ 
+
+ 
+
+Query 3:
+
+ 
+
+SELECT
+
+ 
+
+        `c`.`ID_Cancelacion_PK` AS `ID_Cancelacion_PK`,       
+
+        DATE_FORMAT(c.TimeStamp_Creacion,'%Y-%m-%d  %H:%i') AS `TimeStamp Creacion`,
+
+        c.ID_Registro_Lote_Proceso AS `Nro. Proceso`,
+
+        -- c.NUM_PasoWorkflow as `ID paso Matching`,
+
+        wm.descripcion_paso as `Desc. Paso Matching`,
+
+        -- c.ID_User as `ID Usuario`,
+
+        us.DESC_Usuario as `Usuario`,
+
+        `stc`.`DESC_TipoCancelacion` AS `DESC_TipoCancelacion`,
+
+        `mc`.`ID_Fila_PK` AS `Fila_Contable`,
+
+`mc`.`Documento` AS `Documento`,
+
+  `mc`. `BData_Empresa_Num` AS `Item`,
+
+        `mc`.`Fecha_Asiento` AS `Fecha_Asiento`,
+
+        `mc`.`Fecha_Maestra` AS `Fecha_Maestra`,
+
+        `mc`.`Concepto` AS `Concepto`,
+
+        `mc`.`Val_Debe` AS `Val_Conta_Debe`,
+
+        `mc`.`Val_Haber` AS `Val_Conta_Haber`,
+
+        `mc`.`ID_Clasificacion` AS `ID_Clasifica_Contable`,
+
+        `me`.`ID_Fila_PK` AS `Fila_Entidad`,
+
+        `me`.`Fecha` AS `Fecha`,
+
+        `me`.`Descripcion` AS `Descripcion`,
+
+        `me`.`Val_Debito` AS `Val_Enti_Debe`,
+
+        `me`.`Val_Credito` AS `Val_Enti_Haber`,
+
+        `me`.`ID_Clasificacion` AS `ID_Clasifica_Entidad`,
+
+        c.Importe_Ajuste_Debe AS 'Importe Ajuste Debe',
+
+        c.Importe_Ajuste_Haber'Importe Ajuste Haber',
+
+        c.DESC_Descripcion AS `Info Conciliacion`
+
+    FROM
+
+        ((((((`dw_cancelaciones` `c`
+
+        JOIN `sis_tipo_cancelacion` `stc` ON (`c`.`ID_TipoCancelacion` = `stc`.`ID_TipoCancelacion_PK`))
+
+        JOIN `dw_links` `l` ON (`c`.`ID_Cancelacion_PK` = `l`.`ID_Cancelacion`))
+
+        LEFT JOIN `dw_movs_contables` `mc` ON (`l`.`ID_Mov_Contable` = `mc`.`ID_Fila_PK`))
+
+        LEFT JOIN `dw_movs_entidad` `me` ON (`l`.`ID_Mov_Entidad` = `me`.`ID_Fila_PK`))
+
+        LEFT JOIN `dw_workflow_matching` `wm` ON (`c`.`NUM_PasoWorkflow` = wm.ID_PasoWorkflow_PK))
+
+        LEFT JOIN `sis_usuarios` `us` ON (`c`.`ID_User` = us.ID_User_PK))
+
+where wm.descripcion_paso = 'ITEM PLANILLA MVD C/TOL' and
+
+c.ID_Cuenta=? AND c.Cod_AAAAMM_Ini>=? and c.Cod_AAAAMM_Fin<=?
+
+ 
+
+Listado de cancelaciones cuando el paso de matching que la ejecuta es 'ITEM PLANILLA MVD C/TOL'
+
+ 
+
+ 
+
+Query 4:
+
+ 
+
+SELECT ID_Fila_PK, Fecha_Asiento, Concepto, Val_Debe, Val_Haber, desc_comentario_movimiento as Comentarios, BData_Fecha_Presentacion as Fecha_Registro     
+
+FROM  dw_movs_contables
+
+WHERE  ID_Cuenta=:cuenta: and ISNULL(ID_Cancelacion)  AND Cod_AAAAMM>=:periodo_ini: AND Cod_AAAAMM<=:periodo_fin:
+
+UNION
+
+select c.ID_Fila_PK, c.Fecha_Asiento, c.Concepto, c.Val_Debe, c.Val_Haber, c.desc_comentario_movimiento as Comentarios, c.BData_Fecha_Presentacion as Fecha_Registro
+
+from dw_movs_contables c, dw_links l, dw_cancelaciones can
+
+where can.FLAG_InterPeriodos=1 AND can.Cod_AAAAMM_Ini<=:periodo_fin: and c.ID_Cuenta=:cuenta: and can.ID_Cuenta=:cuenta: and c.ID_Fila_PK=l.ID_Mov_Contable and l.ID_Cancelacion=can.ID_Cancelacion_PK and can.Cod_AAAAMM_Fin>:periodo_fin: and c.Cod_AAAAMM<=:periodo_fin:
+
+order by Fecha_Asiento,Concepto
+
+ 
+
+ 
+
+Listado de movimientos contables y de banco conciliados para la cuenta e intervalo de periodos definido. Los mismos se presentan con su comentario y fecha de registración.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT dc.DESC_Descripcion AS descripcion_conciliacion,
+       dme.Descripcion AS descripcion_movimiento_banco,
+       dme.Val_Debito AS debe,
+       dme.Val_Credito AS haber,
+       dwm.descripcion_paso AS paso_matching,
+       steb.Desc_EstadoBloque AS tipo_estado_conciliacion
+       FROM dw_cancelaciones dc
+       JOIN dw_links dl ON dc.ID_Cancelacion_PK = dl.ID_Cancelacion
+       JOIN dw_movs_entidad dme ON dl.ID_Mov_Entidad = dme.ID_Fila_PK
+       JOIN dw_workflow_matching dwm ON dme.NUM_PasoWorkflow = dwm.NUM_NumeroPaso
+       JOIN sis_tipo_estado_bloques steb ON dc.id_tipo_estado_conciliacion = steb.ID_EstadoBloque_PK;
+
+       `dme.NUM_PasoWorkflow = dwm.NUM_NumeroPaso` instead of `dc.NUM_PasoWorkflow = dwm.NUM_NumeroPaso` (pero esta bien)

@@ -1,7 +1,7 @@
 from models.openai_models import get_open_ai, get_open_ai_json
 from prompts.prompts import (
     planner_prompt_template,
-    table_selector_prompt_template,
+    # table_selector_prompt_template,
     query_checker_prompt_template,
     query_generator_prompt_template,
     router_prompt_template
@@ -48,37 +48,36 @@ class PlannerAgent(Agent):
 
         return self.state
 
-class TableSelectorAgent(Agent):
-    def invoke(self, question, prompt=table_selector_prompt_template, feedback=None, previous_selections=None, schema=None):
-        feedback_value = feedback() if callable(feedback) else feedback
-        previous_selections_value = previous_selections() if callable(previous_selections) else previous_selections
+# class TableSelectorAgent(Agent):
+#     def invoke(self, question, prompt=table_selector_prompt_template, feedback=None, previous_selections=None):
+#         feedback_value = feedback() if callable(feedback) else feedback
+#         previous_selections_value = previous_selections() if callable(previous_selections) else previous_selections
 
-        feedback_value = check_for_content(feedback_value)
-        previous_selections_value = check_for_content(previous_selections_value)
+#         feedback_value = check_for_content(feedback_value)
+#         previous_selections_value = check_for_content(previous_selections_value)
 
-        selector_prompt = prompt.format(
-            feedback=feedback_value,
-            previous_selections=previous_selections_value,
-            schema=schema,
-            datetime=get_current_utc_datetime()
-        )
+#         selector_prompt = prompt.format(
+#             feedback=feedback_value,
+#             previous_selections=previous_selections_value,
+#             datetime=get_current_utc_datetime()
+#         )
 
-        messages = [
-            {"role": "system", "content": selector_prompt},
-            {"role": "user", "content": f"question: {question}"}
-        ]
+#         messages = [
+#             {"role": "system", "content": selector_prompt},
+#             {"role": "user", "content": f"question: {question}"}
+#         ]
 
-        llm = self.get_llm()
-        ai_msg = llm.invoke(messages)
-        response = ai_msg.content
+#         llm = self.get_llm()
+#         ai_msg = llm.invoke(messages)
+#         response = ai_msg.content
 
-        print(f"table selector: {response}")
-        self.update_state("table_selector_response", response)
+#         print(f"table selector: {response}")
+#         self.update_state("table_selector_response", response)
 
-        return self.state
+#         return self.state
 
 class QueryCheckerAgent(Agent):
-    def invoke(self, question, prompt=query_checker_prompt_template, feedback=None, generator=None, schema=None):
+    def invoke(self, question, prompt=query_checker_prompt_template, feedback=None, generator=None):
         feedback_value = feedback() if callable(feedback) else feedback
         generator_value = generator() if callable(generator) else generator
 
@@ -89,7 +88,6 @@ class QueryCheckerAgent(Agent):
             generator=generator_value,
             state=self.state,
             feedback=feedback_value,
-            schema=schema,
             datetime=get_current_utc_datetime(),
         )
 
@@ -109,18 +107,17 @@ class QueryCheckerAgent(Agent):
 
 
 class QueryGeneratorAgent(Agent):
-    def invoke(self, question, prompt=query_generator_prompt_template, feedback=None, schema=None, selector=None, previous_queries=None):
+    def invoke(self, question, prompt=query_generator_prompt_template, feedback=None, previous_queries=None):
         feedback_value = feedback() if callable(feedback) else feedback
-        selector_value = selector() if callable(selector) else selector
+        # selector_value = selector() if callable(selector) else selector
         previous_queries_value = previous_queries() if callable(previous_queries) else previous_queries
 
         feedback_value = check_for_content(feedback_value)
-        selector_value = check_for_content(selector_value)
+        # selector_value = check_for_content(selector_value)
         previous_queries_value = check_for_content(previous_queries_value)
         
         query_generator_prompt = prompt.format(
-            schema=schema,
-            selector=selector_value,
+            # selector=selector_value,
             feedback=feedback_value,
             datetime=get_current_utc_datetime(),
             state=self.state,
@@ -158,6 +155,23 @@ class RouterAgent(Agent):
         response = ai_msg.content
 
         self.update_state("router_response", response)
+        return self.state
+
+class SchemaSenderAgent(Agent):
+    def invoke(self):
+        schema = self.state.get("schema")
+
+        messages = [
+            {"role": "system", "content": "This message is where all other agents will go to see the database schema. The response should be a json with key-value: { is_valid: True/False } only."},
+            {"role": "user", "content": f"schema: {schema}"}
+        ]
+
+        llm = self.get_llm()
+        ai_msg = llm.invoke(messages)
+        response = ai_msg.content
+
+        print(f"sender: {response}")
+
         return self.state
 
 class EndNodeAgent(Agent):

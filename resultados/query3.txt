@@ -1,0 +1,12 @@
+Pregunta: quiero el listado de cancelaciones cuando el paso de matching que la ejecuta es "ITEM PLANILLA MVD C/TOL", para la cuenta con id = 1
+
+SQL Query:  SELECT c.DESC_Descripcion FROM dw_cancelaciones c JOIN dw_workflow_matching wm ON c.NUM_PasoWorkflow = wm.NUM_NumeroPaso WHERE wm.descripcion_paso = 'ITEM PLANILLA MVD C/TOL' AND c.ID_Cuenta = 1;
+
+Comentarios: Hizo select solo de la descripcion, ya que solo se le pidio el listado de las cancelaciones, el ejemplo mostraba muchos mas datos, pero eran especificos y la pregunta no lo pedia.
+
+Segunda pregunta: quiero el listado de cancelaciones con la informacion de sus movimientos, cuando el paso de matching que la ejecuta es "ITEM PLANILLA MVD C/TOL", para la cuenta con id = 1 
+
+SQL Query:  SELECT c.ID_Cancelacion_PK, c.DESC_Descripcion, mc.Concepto AS Movimiento_Contable, me.Descripcion AS Movimiento_Entidad FROM dw_cancelaciones c JOIN dw_links l ON c.ID_Cancelacion_PK = l.ID_Cancelacion LEFT JOIN dw_movs_contables mc ON l.ID_Mov_Contable = mc.ID_Fila_PK LEFT JOIN dw_movs_entidad me ON l.ID_Mov_Entidad = me.ID_Fila_PK JOIN dw_workflow_matching wm ON c.NUM_PasoWorkflow = wm.NUM_NumeroPaso AND c.ID_Cuenta = wm.ID_Cuenta WHERE wm.descripcion_paso = 'ITEM PLANILLA MVD C/TOL' AND c.ID_Cuenta = 1;
+
+Comentarios: Ahora muestra mas informacion, sigue siendo menor a la de la query de ejemplo, pero muestra que si se le pide mas informacion, entonces sigue pudiendo generar queries con joins y mostrando la informacion de manera correcta
+
